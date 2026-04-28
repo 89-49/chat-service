@@ -4,20 +4,13 @@ server:
 spring:
   application:
     name: chat-service
+  config:
+    import: 'optional:configserver: '
+  cloud:
+    discovery:
+      enabled: true
+      service-id: config-server
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chat_db}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
 
 eureka:
   client:
