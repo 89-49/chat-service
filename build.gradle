@@ -30,8 +30,9 @@ ext {
 
 dependencies {
 
-	// PostgreSQL
+	// Database
 	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'com.h2database:h2'
 
 	// common 공통 모듈
 	implementation 'org.pgsg:common:0.0.1-SNAPSHOT'
