@@ -52,6 +52,9 @@ public class ChatRoom extends BaseEntity {
 
     // 채팅 메세지 등록
     public void addMessage(SenderType type, String content){
+        if(this.status != RoomStatus.TRADING){
+            throw new ChatServiceException("InvalidRoomStatusTransitionException");
+        }
         this.messages.add(ChatMessage.of(type, content));
     }
 
