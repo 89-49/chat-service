@@ -16,10 +16,10 @@ import java.util.UUID;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
-    @Column(length = 45, name="product_id")
+    @Column(length = 45, name="product_id", nullable = false)
     private UUID id;
 
-    @Column(length = 100, name="product_name")
+    @Column(length = 100, name="product_name", nullable = false)
     private String name;
 
     protected Product(UUID id, String name) {
