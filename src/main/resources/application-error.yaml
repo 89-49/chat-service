@@ -52,10 +52,20 @@ error:
 
     EmptyChatMessageException:
       code: "C011"
-      message: "메세지는 빈 상태로 보낼 수 없습니다."
+      message: "메시지는 빈 상태로 보낼 수 없습니다."
       status: 400
 
     AlreadyChatRoomException:
       code: "C012"
       message: "이미 존재하는 채팅방 입니다."
       status: 409
+
+    InvalidSenderTypeException:
+      code: "C013"
+      message: "발신자 유형이 올바르지 않습니다."
+      status: 400
+
+    InvalidRoomStatusTransitionException:
+      code: "C014"
+      message: "채팅 방의 상태가 올바르지 않습니다."
+      status: 400
