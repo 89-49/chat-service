@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 import org.pgsg.chat.domain.event.ChatEvents;
+import org.pgsg.chat.domain.exception.ChatServiceException;
 import org.pgsg.common.domain.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -64,6 +65,9 @@ public class ChatRoom extends BaseEntity {
         if(this.status == RoomStatus.COMPLETED){ // 이미 완료 상태이면 처리 X, 멱등성 처리
             return;
         }
+        if(this.status == RoomStatus.CANCELED){
+            throw new ChatServiceException("InvalidRoomStatusTransitionException");
+        }
 
         this.status = RoomStatus.COMPLETED;
 
@@ -75,6 +79,9 @@ public class ChatRoom extends BaseEntity {
     public void cancel(ChatEvents events) {
         if(this.status == RoomStatus.CANCELED){ // 이미 취소 상태이면 처리 X, 멱등성 처리
             return;
+        }
+        if(this.status == RoomStatus.COMPLETED){
+            throw new ChatServiceException("InvalidRoomStatusTransitionException");
         }
         this.status = RoomStatus.CANCELED;
 
