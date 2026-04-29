@@ -7,9 +7,10 @@ spring:
   config:
     import: 'optional:configserver: '
   cloud:
-    discovery:
-      enabled: true
-      service-id: config-server
+    config:
+     discovery:
+        enabled: true
+        service-id: config-server
 
 
 eureka:
