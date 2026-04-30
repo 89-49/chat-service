@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pgsg.chat.application.service.ChatService;
 import org.pgsg.chat.infrastructure.listener.dto.TradeCanceled;
+import org.pgsg.common.exception.CustomException;
 import org.pgsg.common.messaging.annotation.IdempotentConsumer;
 import org.pgsg.common.util.JsonUtil;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,13 +22,16 @@ public class TradeCanceledListener {
     @KafkaListener(topics = "${topics.trade.cancelled}", groupId = "chat-service")
     public void onCanceled(Message<String> message, Acknowledgment ack) {
         TradeCanceled canceled = JsonUtil.fromJson(message.getPayload(), TradeCanceled.class);
+        if (canceled == null || canceled.tradeId() == null){
+            throw new CustomException("InvalidTradeIdException");
+        }
         try {
             chatService.cancel(canceled.tradeId());
             ack.acknowledge();
 
             log.info("채팅 거래 취소 성공!! roomId: {}", canceled.tradeId());
         } catch (Exception e){
-            log.error("채팅 거래 취소 처리 실패!!: {}, roomId: {}", e.getMessage(), canceled.tradeId(), e);
+            log.error("채팅 거래 취소 처리 실패!! payload={}", message.getPayload(), e);
             throw e;
         }
 

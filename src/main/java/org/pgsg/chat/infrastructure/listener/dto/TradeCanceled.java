@@ -1,7 +1,9 @@
 package org.pgsg.chat.infrastructure.listener.dto;
 
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.UUID;
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record TradeCanceled(
         UUID tradeId
 ) {
