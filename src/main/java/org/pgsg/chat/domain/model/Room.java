@@ -42,10 +42,10 @@ public class Room extends BaseEntity {
     private List<Message> messages = new ArrayList<>();
 
     @Builder
-    public Room(UUID tradeId, UUID productId, String productName, UUID sellerId, String sellerNickName, UUID buyerId, String buyerNickName) {
+    public Room(UUID tradeId, UUID productId, String productName, UUID sellerId, String sellerNickname, UUID buyerId, String buyerNickname) {
         this.id = RoomId.of(tradeId);
-        this.seller = new Seller(sellerId, sellerNickName);
-        this.buyer = new Buyer(buyerId, buyerNickName);
+        this.seller = new Seller(sellerId, sellerNickname);
+        this.buyer = new Buyer(buyerId, buyerNickname);
         this.product = new Product(productId, productName);
         this.status = RoomStatus.TRADING;
     }
