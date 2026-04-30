@@ -36,11 +36,11 @@ public class ChatMessage {
     private LocalDateTime createdAt;
 
     public static ChatMessage of(SenderType type, String content) {
-        if(type ==null){
+        if (type ==null) {
             throw new ChatServiceException("InvalidSenderTypeException");
         }
 
-        if(!StringUtils.hasText(content)){
+        if (content == null || content.isBlank()) {
             throw new ChatServiceException("EmptyChatMessageException");
         }
         ChatMessage chatMessage = new ChatMessage();
