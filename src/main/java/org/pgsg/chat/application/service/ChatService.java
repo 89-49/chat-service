@@ -25,6 +25,21 @@ public class ChatService {
         chatRoomRepository.save(dto.toChatRoom());
     }
 
-   
+    // 거래 성공 처리
+    @Transactional
+    public void complete(UUID roomId){
+        getRoom(roomId).complete(chatEvents);
+    }
+
+    // 거래 취소 처리
+    @Transactional
+    public void cancel(UUID roomId){
+        getRoom(roomId).cancel(chatEvents);
+    }
+
+    private Room getRoom(UUID roomId){
+        return chatRoomRepository.findById(RoomId.of(roomId))
+                .orElseThrow(ChatRoomNotFoundException::new);
+    }
 
 }
