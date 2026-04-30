@@ -7,16 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.pgsg.chat.domain.exception.ChatServiceException;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_message")
+@Table(name = "p_chat_message")
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class ChatMessage {
+public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +34,7 @@ public class ChatMessage {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    public static ChatMessage of(SenderType type, String content) {
+    public static Message of(SenderType type, String content) {
         if (type ==null) {
             throw new ChatServiceException("InvalidSenderTypeException");
         }
@@ -43,9 +42,9 @@ public class ChatMessage {
         if (content == null || content.isBlank()) {
             throw new ChatServiceException("EmptyChatMessageException");
         }
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.senderType = type;
-        chatMessage.content = content;
-        return chatMessage;
+        Message message = new Message();
+        message.senderType = type;
+        message.content = content;
+        return message;
     }
 }
