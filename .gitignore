@@ -223,3 +223,4 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,java,gradle,intellij+all,visualstudiocode
 
 generated/
+src/main/resources/ssl/kafka.server.truststore.jks
