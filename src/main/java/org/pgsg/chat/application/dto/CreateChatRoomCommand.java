@@ -9,9 +9,9 @@ public record CreateChatRoomCommand(
         UUID productId,
         String productName,
         UUID sellerId,
-        String sellerNickName,
+        String sellerNickname,
         UUID buyerId,
-        String buyerNickName
+        String buyerNickname
 ) {
     public Room toChatRoom() {
         return Room.builder()
@@ -19,9 +19,9 @@ public record CreateChatRoomCommand(
                 .productId(productId)
                 .productName(productName)
                 .sellerId(sellerId)
-                .sellerNickName(sellerNickName)
+                .sellerNickname(sellerNickname)
                 .buyerId(buyerId)
-                .buyerNickName(buyerNickName)
+                .buyerNickname(buyerNickname)
                 .build();
     }
 }
