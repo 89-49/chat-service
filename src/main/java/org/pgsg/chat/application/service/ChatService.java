@@ -37,6 +37,12 @@ public class ChatService {
         getRoom(roomId).cancel(chatEvents);
     }
 
+    // 채팅 대화 기록
+    @Transactional
+    public void addMessage(UUID roomId, String senderType, String message) {
+        getRoom(roomId).addMessage(SenderType.valueOf(senderType), message);
+    }
+
     private Room getRoom(UUID roomId){
         return chatRoomRepository.findById(RoomId.of(roomId))
                 .orElseThrow(ChatRoomNotFoundException::new);
