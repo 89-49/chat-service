@@ -55,7 +55,7 @@ public class Room extends BaseEntity {
     }
 
     // 채팅 메세지 등록
-    public void addMessage(SenderType type, String content, ChatEvents chatEvents) {
+    public void addMessage(SenderType type, String content) {
         if(this.status != RoomStatus.TRADING){
             throw new ChatServiceException(ChatErrorCode.CHAT_ROOM_INVALID_STATUS_TRANSITION);
         }
