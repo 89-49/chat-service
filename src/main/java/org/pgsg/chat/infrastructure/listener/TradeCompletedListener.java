@@ -3,6 +3,7 @@ package org.pgsg.chat.infrastructure.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pgsg.chat.application.service.ChatService;
+import org.pgsg.chat.domain.exception.ChatErrorCode;
 import org.pgsg.chat.infrastructure.listener.dto.TradeCompleted;
 import org.pgsg.common.exception.CustomException;
 import org.pgsg.common.messaging.annotation.IdempotentConsumer;
@@ -23,7 +24,7 @@ public class TradeCompletedListener {
     public void onCompleted(Message<String> message, Acknowledgment ack) {
         TradeCompleted completed = JsonUtil.fromJson(message.getPayload(), TradeCompleted.class);
         if (completed == null || completed.tradeId() == null) {
-            throw new CustomException("InvalidTradeIdException");
+            throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_INFO_REQUIRED);
         }
         try {
             chatService.complete(completed.tradeId());

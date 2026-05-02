@@ -3,6 +3,7 @@ package org.pgsg.chat.infrastructure.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pgsg.chat.application.service.ChatService;
+import org.pgsg.chat.domain.exception.ChatErrorCode;
 import org.pgsg.chat.infrastructure.listener.dto.TradeCanceled;
 import org.pgsg.common.exception.CustomException;
 import org.pgsg.common.messaging.annotation.IdempotentConsumer;
@@ -23,7 +24,7 @@ public class TradeCanceledListener {
     public void onCanceled(Message<String> message, Acknowledgment ack) {
         TradeCanceled canceled = JsonUtil.fromJson(message.getPayload(), TradeCanceled.class);
         if (canceled == null || canceled.tradeId() == null){
-            throw new CustomException("InvalidTradeIdException");
+            throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_INFO_REQUIRED);
         }
         try {
             chatService.cancel(canceled.tradeId());
