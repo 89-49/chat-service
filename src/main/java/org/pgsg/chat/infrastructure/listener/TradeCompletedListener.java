@@ -23,8 +23,11 @@ public class TradeCompletedListener {
     @KafkaListener(topics = "${topics.trade.completed}", groupId="chat-service")
     public void onCompleted(Message<String> message, Acknowledgment ack) {
         TradeCompleted completed = JsonUtil.fromJson(message.getPayload(), TradeCompleted.class);
-        if (completed == null || completed.tradeId() == null) {
+        if (completed == null){
             throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_INFO_REQUIRED);
+        }
+        if (completed.tradeId() == null){
+            throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_ID_REQUIRED);
         }
         try {
             chatService.complete(completed.tradeId());

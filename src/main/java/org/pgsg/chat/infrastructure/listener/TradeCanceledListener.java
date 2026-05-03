@@ -23,8 +23,11 @@ public class TradeCanceledListener {
     @KafkaListener(topics = "${topics.trade.cancelled}", groupId = "chat-service")
     public void onCanceled(Message<String> message, Acknowledgment ack) {
         TradeCanceled canceled = JsonUtil.fromJson(message.getPayload(), TradeCanceled.class);
-        if (canceled == null || canceled.tradeId() == null){
+        if (canceled == null){
             throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_INFO_REQUIRED);
+        }
+        if (canceled.tradeId() == null){
+           throw new CustomException(ChatErrorCode.CHAT_VALIDATION_TRADE_ID_REQUIRED);
         }
         try {
             chatService.cancel(canceled.tradeId());

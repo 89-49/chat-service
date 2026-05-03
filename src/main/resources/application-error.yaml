@@ -19,6 +19,10 @@ error:
       code: "C002"
       message: "판매자의 id 값이 Null일 수 없습니다."
       status: 400
+    "[chat.validation.seller-id.invalid]":
+      code: "C016"
+      message: "판매자의 id 값이 올바르지 않습니다."
+      status: 400
     "[chat.validation.buyer-id.required]":
       code: "C003"
       message: "구매자의 id 값이 Null일 수 없습니다."
@@ -51,7 +55,7 @@ error:
       code: "C009"
       message: "채팅방의 상태가 거래 완료입니다."
       status: 400
-    "[chat.status.already-canceled]":
+    "[chat.status.already-cancelled]":
       code: "C010"
       message: "채팅방의 상태가 거래 취소입니다."
       status: 400
