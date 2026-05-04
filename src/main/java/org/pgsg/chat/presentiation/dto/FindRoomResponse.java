@@ -3,6 +3,7 @@ package org.pgsg.chat.presentiation.dto;
 import lombok.Builder;
 import org.pgsg.chat.application.dto.RoomInfo;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
@@ -14,7 +15,9 @@ public record FindRoomResponse(
         String buyerNickname,
         UUID productId,
         String productName,
-        String roomStatus
+        String roomStatus,
+        LocalDateTime lastMessageAt,
+        String lastMessage
 ) {
     public static FindRoomResponse from(RoomInfo roomInfo) {
         return FindRoomResponse.builder()
@@ -26,6 +29,8 @@ public record FindRoomResponse(
                 .productId(roomInfo.productId())
                 .productName(roomInfo.productName())
                 .roomStatus(roomInfo.roomStatus())
+                .lastMessageAt(roomInfo.lastMessageAt())
+                .lastMessage(roomInfo.lastMessage())
                 .build();
     }
 }
