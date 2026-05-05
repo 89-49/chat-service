@@ -22,7 +22,7 @@ public class ChatService {
     // 채팅방 생성
     @Transactional
     public void createRoom(CreateChatRoomCommand dto) {
-        chatRoomRepository.save(dto.toChatRoom());
+        chatRoomRepository.save(dto.toChatRoom(chatEvents));
     }
 
     // 거래 성공 처리
@@ -40,7 +40,7 @@ public class ChatService {
     // 채팅 대화 기록
     @Transactional
     public void addMessage(UUID roomId, String senderType, String message) {
-        getRoom(roomId).addMessage(SenderType.valueOf(senderType), message);
+        getRoom(roomId).addMessage(SenderType.valueOf(senderType), message, chatEvents);
     }
 
     private Room getRoom(UUID roomId){
