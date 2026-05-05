@@ -4,6 +4,7 @@ import lombok.Builder;
 import org.pgsg.chat.domain.model.Room;
 import org.springframework.context.annotation.Bean;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
@@ -15,7 +16,9 @@ public record RoomInfo(
         String buyerNickname,
         UUID productId,
         String productName,
-        String roomStatus
+        String roomStatus,
+        LocalDateTime lastMessageAt,
+        String lastMessage
 ) {
     public static RoomInfo from(Room room) {
         return RoomInfo.builder()
@@ -27,6 +30,8 @@ public record RoomInfo(
                 .productId(room.getProduct().getId())
                 .productName(room.getProduct().getName())
                 .roomStatus(room.getStatus().name())
+                .lastMessageAt(room.getLastMessageAt())
+                .lastMessage(room.getMessages().isEmpty() ? null : room.getMessages().getLast().getContent())
                 .build();
     }
 }

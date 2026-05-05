@@ -7,27 +7,21 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
-public record FindRoomResponse(
+public record ListRoomResponse(
         UUID roomId,
-        UUID sellerId,
-        String sellerNickname,
-        UUID buyerId,
-        String buyerNickname,
-        UUID productId,
         String productName,
+        String sellerNickname,
+        String buyerNickname,
         String roomStatus,
         LocalDateTime lastMessageAt,
         String lastMessage
 ) {
-    public static FindRoomResponse from(RoomInfo roomInfo) {
-        return FindRoomResponse.builder()
+    public static ListRoomResponse from(RoomInfo roomInfo) {
+        return ListRoomResponse.builder()
                 .roomId(roomInfo.roomId())
-                .sellerId(roomInfo.sellerId())
-                .sellerNickname(roomInfo.sellerNickname())
-                .buyerId(roomInfo.buyerId())
-                .buyerNickname(roomInfo.buyerNickname())
-                .productId(roomInfo.productId())
                 .productName(roomInfo.productName())
+                .sellerNickname(roomInfo.sellerNickname())
+                .buyerNickname(roomInfo.buyerNickname())
                 .roomStatus(roomInfo.roomStatus())
                 .lastMessageAt(roomInfo.lastMessageAt())
                 .lastMessage(roomInfo.lastMessage())
