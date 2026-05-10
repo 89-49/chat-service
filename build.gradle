@@ -35,7 +35,7 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 
 	// common 공통 모듈
-	implementation 'org.pgsg:common:0.2.2-SNAPSHOT'
+	implementation 'org.pgsg:common:0.2.7-SNAPSHOT'
 
 	// STOMP WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
