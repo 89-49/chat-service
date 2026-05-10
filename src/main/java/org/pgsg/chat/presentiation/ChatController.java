@@ -37,13 +37,13 @@ public class ChatController {
     }
 
     @GetMapping("/rooms/{roomId}")
-    public ResponseEntity<FindRoomResponse> findRoom(@PathVariable("roomId") UUID roomId){
+    public FindRoomResponse findRoom(@PathVariable("roomId") UUID roomId){
         FindRoomResponse response = FindRoomResponse.from(chatQueryService.findChatRoom(roomId));
-        return ResponseEntity.ok(response);
+        return response;
     }
 
     @GetMapping("/rooms")
-    public ResponseEntity<Page<ListRoomResponse>> findRooms(
+    public Page<ListRoomResponse> findRooms(
             @RequestParam(required = false)List<UUID> userIds,
             @RequestParam(required = false) String productName,
             @RequestParam(required = false) String userName,
@@ -52,7 +52,7 @@ public class ChatController {
             ){
         Page<ListRoomResponse> response = chatQueryService.findChatRooms(FindChatRoomQuery.of(userIds, productName,userName,keyword),pageable).map(ListRoomResponse::from);
 
-        return ResponseEntity.ok(response);
+        return response;
     }
 
 }
