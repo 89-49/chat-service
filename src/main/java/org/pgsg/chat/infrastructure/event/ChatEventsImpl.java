@@ -7,6 +7,7 @@ import org.pgsg.chat.domain.model.Room;
 import org.pgsg.chat.infrastructure.event.dto.MessageCreated;
 import org.pgsg.chat.infrastructure.event.dto.RoomCreated;
 import org.pgsg.common.event.Events;
+import org.pgsg.common.event.OutboxEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -32,24 +33,38 @@ public class ChatEventsImpl implements ChatEvents {
 
     @Override
     public void roomCreated(Room room) {
-        Events.trigger(new RoomCreated(
+        RoomCreated roomCreated = new RoomCreated(
                 room.getId().getId(),
                 room.getStatus(),
                 topics.roomCreated(),
-                UUID.randomUUID()
+                room.getId().getId()
+        );
+        Events.trigger(new OutboxEvent(
+                roomCreated.correlationId(),
+                roomCreated.domainId(),
+                roomCreated.domainType(),
+                roomCreated.eventType(),
+                roomCreated.payload()
         ));
     }
 
     @Override
     public void messageSent(Message message) {
+        MessageCreated messageCreated = new MessageCreated(
+                message.getId(),
+                message.getSenderType(),
+                message.getContent(),
+                LocalDateTime.now(),
+                topics.messageSent(),
+                UUID.randomUUID()
+        );
         Events.trigger(
-                new MessageCreated(
-                        message.getId(),
-                        message.getSenderType(),
-                        message.getContent(),
-                        LocalDateTime.now(),
-                        topics.messageSent(),
-                        UUID.randomUUID()
+                new OutboxEvent(
+                        messageCreated.correlationId(),
+                        messageCreated.domainId(),
+                        messageCreated.domainType(),
+                        messageCreated.eventType(),
+                        messageCreated.payload()
                 )
         );
     }

@@ -51,7 +51,7 @@ public class Room extends BaseEntity {
         this.status = RoomStatus.TRADING;
 
         // 방 생성 후 이벤트 발행
-//        chatEvents.roomCreated(this);
+        chatEvents.roomCreated(this);
     }
 
     // 채팅 메세지 등록
@@ -61,7 +61,7 @@ public class Room extends BaseEntity {
         }
         Message message = Message.of(type, content);
         this.messages.add(message);
-//        chatEvents.messageSent(message);
+        chatEvents.messageSent(message);
     }
 
     // 마지막 메세지 등록 일시
