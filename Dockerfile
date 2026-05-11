@@ -1,10 +1,4 @@
-FROM gradle:8.7-jdk21 AS build
-WORKDIR /app
-COPY . .
-RUN chmod +x ./gradlew
-RUN gradle bootJar --no-daemon
-
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY build/libs/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
