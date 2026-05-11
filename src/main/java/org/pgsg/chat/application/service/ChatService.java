@@ -44,7 +44,7 @@ public class ChatService {
     @Transactional
     public void addMessage(UUID roomId, String senderType, String message) {
         Room room = getRoom(roomId);
-        Message savedMessage = room.addMessage(SenderType.valueOf(senderType), message);
+        Message savedMessage = room.addMessage(SenderType.from(senderType), message);
         entityManager.flush();
         chatEvents.messageSent(savedMessage);
     }
