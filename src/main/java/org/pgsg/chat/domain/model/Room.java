@@ -50,18 +50,21 @@ public class Room extends BaseEntity {
         this.product = new Product(productId, productName);
         this.status = RoomStatus.TRADING;
 
+        if (chatEvents == null) {
+            throw new ChatServiceException(ChatErrorCode.CHAT_EVENTS_REQUIRED);
+        }
         // 방 생성 후 이벤트 발행
-//        chatEvents.roomCreated(this);
+        chatEvents.roomCreated(this);
     }
 
     // 채팅 메세지 등록
-    public void addMessage(SenderType type, String content) {
+    public Message addMessage(SenderType type, String content) {
         if(this.status != RoomStatus.TRADING){
             throw new ChatServiceException(ChatErrorCode.CHAT_ROOM_INVALID_STATUS_TRANSITION);
         }
         Message message = Message.of(type, content);
         this.messages.add(message);
-//        chatEvents.messageSent(message);
+        return message;
     }
 
     // 마지막 메세지 등록 일시
