@@ -1,6 +1,11 @@
 FROM gradle:8.7-jdk21 AS build
 WORKDIR /app
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
 COPY . .
+RUN chmod +x ./gradlew
 RUN gradle bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
