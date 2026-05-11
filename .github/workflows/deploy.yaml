@@ -35,6 +35,7 @@ jobs:
           key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
           source: "build/libs/*.jar,Dockerfile"
           target: "/home/${{ secrets.GCE_USERNAME }}/chat-service"
+          strip_components: 0
 
       - name: Deploy to GCE
         uses: appleboy/ssh-action@master
