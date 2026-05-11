@@ -27,6 +27,15 @@ jobs:
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
+      - name: Copy files to GCE
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USERNAME }}
+          key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
+          source: "build/libs/*.jar,Dockerfile"
+          target: "/home/${{ secrets.GCE_USERNAME }}/chat-service"
+
       - name: Deploy to GCE
         uses: appleboy/ssh-action@master
         with:
@@ -34,12 +43,11 @@ jobs:
           username: ${{ secrets.GCE_USERNAME }}
           key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
           script: |
-            cd /app/chat-service
-            git pull origin main
-            sudo docker build -t chat-service .
-            sudo docker stop chat-service || true
-            sudo docker rm chat-service || true
-            sudo docker run -d \
+            cd ~/chat-service
+            docker build -t chat-service .
+            docker stop chat-service || true
+            docker rm chat-service || true
+            docker run -d \
               --name chat-service \
               -p 8084:8084 \
               chat-service
