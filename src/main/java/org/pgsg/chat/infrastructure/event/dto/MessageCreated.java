@@ -28,7 +28,9 @@ public record MessageCreated(
 
     @Override
     public UUID domainId() {
-        return UUID.randomUUID();
+        return UUID.nameUUIDFromBytes(
+                String.valueOf(messageId).getBytes()
+        );
     }
 
     @Override

@@ -37,7 +37,7 @@ public class ChatEventsImpl implements ChatEvents {
                 room.getId().getId(),
                 room.getStatus(),
                 topics.roomCreated(),
-                room.getId().getId()
+                UUID.randomUUID()
         );
         Events.trigger(new OutboxEvent(
                 roomCreated.correlationId(),

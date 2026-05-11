@@ -32,7 +32,10 @@ public enum ChatErrorCode implements ErrorCode {
 
     // --- 5. 메시지 및 발신자 오류  ---
     CHAT_MESSAGE_EMPTY("chat.message.empty"), // 아무 글자도 안 쓰고 보내기 눌렀을 때
-    CHAT_SENDER_INVALID_TYPE("chat.sender.invalid-type"); // 보낸 사람이 판매자도 구매자도 아닐 때
+    CHAT_SENDER_INVALID_TYPE("chat.sender.invalid-type"),
+
+    // --- 6. 이벤트 오류  ---
+    CHAT_EVENTS_REQUIRED("chat.events.required"); // 보낸 사람이 판매자도 구매자도 아닐 때
 
 
     private final String errorKey;
