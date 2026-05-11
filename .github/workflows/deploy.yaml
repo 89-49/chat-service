@@ -51,5 +51,5 @@ jobs:
             docker run -d \
               --name chat-service \
               -p 8084:8084 \
-              -e SPRING_CLOUD_CONFIG_URI=http://34.64.151.148:8888 \
+              -e SPRING_CLOUD_CONFIG_URI=http://34.50.50.170:13100 \
               chat-service
