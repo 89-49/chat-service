@@ -1,0 +1,42 @@
+name: Deploy Chat Service
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar --no-daemon
+
+      - name: Deploy to GCE
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USERNAME }}
+          key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
+          script: |
+            cd /app/chat-service
+            git pull origin main
+            sudo docker build -t chat-service .
+            sudo docker stop chat-service || true
+            sudo docker rm chat-service || true
+            sudo docker run -d \
+              --name chat-service \
+              -p 8084:8084 \
+              chat-service
