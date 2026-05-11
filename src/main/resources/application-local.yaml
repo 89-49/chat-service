@@ -1,24 +1,21 @@
-server:
-  port: 8084
-
 spring:
-  profiles:
-    include: docker-compose.infra,kafka,topics
-  application:
-    name: chat-service
   config:
     import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://34.50.50.170:13100}
   cloud:
     config:
       uri: ${SPRING_CLOUD_CONFIG_URI:http://34.50.50.170:13100}
       discovery:
-        enabled: ${SPRING_CLOUD_CONFIG_DISCOVERY_ENABLED:false}
-        service-id: config-server
-
+        enabled: false
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_URL:localhost:5432/chat-db}
+    username: ${DB_USERNAME:pgsg-user}
+    password: ${DB_PASSWORD:pgsg-password-1234}
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

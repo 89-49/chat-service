@@ -12,6 +12,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DDL_AUTO: ${DB_DDL_AUTO}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI}
+      SPRING_PROFILES_ACTIVE: local
+      TRUST_STORE_PASSWORD: ${TRUST_STORE_PASSWORD}
+      SPRING_KAFKA_SSL_TRUST_STORE_LOCATION: file:/app/ssl/kafka.server.truststore.jks
     networks:
       - pgsg-network
 
