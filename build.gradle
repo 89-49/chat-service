@@ -92,4 +92,6 @@ tasks.named('bootRun') {
 	environment 'DB_USERNAME', System.getenv('DB_USERNAME') ?: 'pgsg-user'
 	environment 'DB_PASSWORD', System.getenv('DB_PASSWORD') ?: 'pgsg-password-1234'
 	environment 'DB_DDL_AUTO', System.getenv('DB_DDL_AUTO') ?: 'update'
+	environment 'EUREKA_CLIENT_SERVICEURL_DEFAULTZONE', System.getenv('EUREKA_CLIENT_SERVICEURL_DEFAULTZONE') ?: 'http://34.64.58.121:8761/eureka/,http://34.64.104.174:8761/eureka/'
+	environment 'EUREKA_SERVER_URL', System.getenv('EUREKA_SERVER_URL') ?: 'http://34.64.58.121:8761/eureka/,http://34.64.104.174:8761/eureka/'
 }
