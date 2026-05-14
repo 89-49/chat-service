@@ -17,6 +17,8 @@ services:
       SPRING_PROFILES_ACTIVE: local
       TRUST_STORE_PASSWORD: ${TRUST_STORE_PASSWORD}
       SPRING_KAFKA_SSL_TRUST_STORE_LOCATION: file:/app/ssl/kafka.server.truststore.jks
+    volumes:
+      - ./ssl:/app/ssl
     networks:
       - pgsg-network
 

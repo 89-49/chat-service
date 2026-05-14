@@ -1,0 +1,17 @@
+services:
+  chat-service:
+    container_name: chat-service
+    image: ${AR_IMAGE_PATH}:${IMAGE_TAG}
+    restart: always
+    ports:
+      - "8084:8084"
+    env_file:
+      - .env
+    volumes:
+      - /opt/chat-service/ssl:/app/ssl
+    networks:
+      - pgsg-network
+
+networks:
+  pgsg-network:
+    external: true

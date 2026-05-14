@@ -2,21 +2,45 @@ name: Deploy Chat Service
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, main ]
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT: ${{ vars.GCP_PROJECT_ID }}
+  AR_IMAGE_PATH: ${{ vars.AR_IMAGE_PATH }}
+  WORK_DIR: /opt/chat-service
+  HEALTH_RETRIES: 30
+  HEALTH_INTERVAL: 10
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: temurin
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -27,60 +51,183 @@ jobs:
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
-      - name: Copy files to GCE
-        uses: appleboy/scp-action@master
+      - name: Resolve image metadata
+        id: meta
+        run: |
+          echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          REGISTRY_HOST=$(echo "$AR_IMAGE_PATH" | cut -d/ -f1)
+          echo "registry_host=${REGISTRY_HOST}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v3
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USERNAME }}
-          key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
-          source: "build/libs/chat-0.0.1-SNAPSHOT.jar,Dockerfile,src/main/resources/ssl/kafka.server.truststore.jks"
-          target: "/home/${{ secrets.GCE_USERNAME }}/chat-service"
-          strip_components: 0
-          overwrite: true
-          timeout: 60s
-          command_timeout: 120s
+          registry: ${{ steps.meta.outputs.registry_host }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Deploy to GCE
-        uses: appleboy/ssh-action@master
+      - name: Build and push image
+        uses: docker/build-push-action@v5
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USERNAME }}
-          key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/chat-service
-            docker build --no-cache -t chat-service .
-            docker stop chat-service || true
-            docker rm chat-service || true
+          context: .
+          push: true
+          tags: |
+            ${{ env.AR_IMAGE_PATH }}:${{ steps.meta.outputs.tag }}
+            ${{ env.AR_IMAGE_PATH }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-            set -- \
-              -e SPRING_CLOUD_CONFIG_URI=http://34.50.50.170:13100 \
-              -e SPRING_PROFILES_ACTIVE=local \
-              -e EUREKA_SERVER_URL=http://34.64.58.121:8761/eureka/,http://34.64.104.174:8761/eureka/ \
-              -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://34.64.58.121:8761/eureka/,http://34.64.104.174:8761/eureka/ \
-              -e SPRING_KAFKA_SSL_TRUST_STORE_LOCATION=file:/app/ssl/kafka.server.truststore.jks
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        include:
+          - vm: ${{ vars.CHAT_SERVICE_VM }}
+            zone: ${{ vars.GCP_ZONE }}
+    steps:
+      - uses: actions/checkout@v4
 
-            if [ -n "${{ secrets.TRUST_STORE_PASSWORD }}" ]; then
-              set -- "$@" -e TRUST_STORE_PASSWORD="${{ secrets.TRUST_STORE_PASSWORD }}"
-            fi
-            if [ -n "${{ secrets.DB_URL }}" ]; then
-              set -- "$@" -e DB_URL="${{ secrets.DB_URL }}"
-            fi
-            if [ -n "${{ secrets.DB_USERNAME }}" ]; then
-              set -- "$@" -e DB_USERNAME="${{ secrets.DB_USERNAME }}"
-            fi
-            if [ -n "${{ secrets.DB_PASSWORD }}" ]; then
-              set -- "$@" -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            fi
-            if [ -n "${{ secrets.DB_DDL_AUTO }}" ]; then
-              set -- "$@" -e DB_DDL_AUTO="${{ secrets.DB_DDL_AUTO }}"
-            fi
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
 
-            docker run -d \
-              --name chat-service \
-              --restart unless-stopped \
-              -p 8084:8084 \
-              "$@" \
-              chat-service
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
-            sleep 10
-            docker logs --tail 120 chat-service
+      - name: Resolve rollback target
+        id: rollback
+        run: |
+          STABLE=$(gcloud artifacts docker tags list "$AR_IMAGE_PATH" \
+            --project="$GCP_PROJECT" \
+            --filter="tag=stable" \
+            --format="value(tag)" 2>/dev/null | head -n1)
+
+          if [ -n "$STABLE" ]; then
+            echo "tag=stable" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "No stable tag yet. Rollback will be skipped."
+          fi
+
+      - name: Sync compose file to ${{ matrix.vm }}
+        run: |
+          gcloud compute scp deploy/docker-compose.prod.yaml \
+            ${{ matrix.vm }}:/tmp/docker-compose.prod.yaml \
+            --zone="${{ matrix.zone }}" \
+            --project="$GCP_PROJECT" \
+            --tunnel-through-iap
+
+      - name: Deploy and verify on ${{ matrix.vm }}
+        id: deploy_run
+        env:
+          NEW_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          AR_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          REGISTRY_HOST=$(echo "$AR_IMAGE_PATH" | cut -d/ -f1)
+
+          gcloud compute ssh ${{ matrix.vm }} \
+            --zone="${{ matrix.zone }}" \
+            --project="$GCP_PROJECT" \
+            --tunnel-through-iap \
+            --command="
+              set -e
+
+              echo '$AR_TOKEN' | sudo docker login -u oauth2accesstoken --password-stdin $REGISTRY_HOST
+
+              sudo mkdir -p $WORK_DIR
+              sudo mkdir -p $WORK_DIR/ssl
+              sudo mv /tmp/docker-compose.prod.yaml $WORK_DIR/docker-compose.prod.yaml
+              cd $WORK_DIR
+
+              test -f .env || { echo '.env not found in $WORK_DIR'; exit 1; }
+
+              if ! sudo docker network inspect pgsg-network > /dev/null 2>&1; then
+                sudo docker network create pgsg-network
+              fi
+
+              export IMAGE_TAG='$NEW_TAG'
+              export AR_IMAGE_PATH='${{ env.AR_IMAGE_PATH }}'
+
+              sudo env AR_IMAGE_PATH=\"\$AR_IMAGE_PATH\" IMAGE_TAG=\"\$IMAGE_TAG\" docker compose -f docker-compose.prod.yaml config > /dev/null
+              sudo env AR_IMAGE_PATH=\"\$AR_IMAGE_PATH\" IMAGE_TAG=\"\$IMAGE_TAG\" docker compose -f docker-compose.prod.yaml pull
+              sudo env AR_IMAGE_PATH=\"\$AR_IMAGE_PATH\" IMAGE_TAG=\"\$IMAGE_TAG\" docker compose -f docker-compose.prod.yaml up -d
+
+              for i in \$(seq 1 $HEALTH_RETRIES); do
+                if sudo docker ps --filter name=chat-service --filter status=running --format '{{.Names}}' | grep -q '^chat-service$'; then
+                  exit 0
+                fi
+                sleep $HEALTH_INTERVAL
+              done
+
+              echo 'chat-service container is not running.'
+              sudo docker logs --tail 120 chat-service || true
+              exit 1
+            "
+
+      - name: Rollback ${{ matrix.vm }}
+        if: failure() && steps.deploy_run.conclusion == 'failure' && steps.rollback.outputs.tag != ''
+        env:
+          ROLLBACK_TAG: ${{ steps.rollback.outputs.tag }}
+          AR_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          REGISTRY_HOST=$(echo "$AR_IMAGE_PATH" | cut -d/ -f1)
+
+          gcloud compute ssh ${{ matrix.vm }} \
+            --zone="${{ matrix.zone }}" \
+            --project="$GCP_PROJECT" \
+            --tunnel-through-iap \
+            --command="
+              set -e
+
+              echo '$AR_TOKEN' | sudo docker login -u oauth2accesstoken --password-stdin $REGISTRY_HOST
+              cd $WORK_DIR
+
+              export IMAGE_TAG='$ROLLBACK_TAG'
+              export AR_IMAGE_PATH='${{ env.AR_IMAGE_PATH }}'
+
+              sudo env AR_IMAGE_PATH=\"\$AR_IMAGE_PATH\" IMAGE_TAG=\"\$IMAGE_TAG\" docker compose -f docker-compose.prod.yaml pull
+              sudo env AR_IMAGE_PATH=\"\$AR_IMAGE_PATH\" IMAGE_TAG=\"\$IMAGE_TAG\" docker compose -f docker-compose.prod.yaml up -d
+            "
+
+  promote-stable:
+    needs: [ build-and-push, deploy ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Promote new SHA to :stable tag
+        run: |
+          NEW_TAG="${{ needs.build-and-push.outputs.image_tag }}"
+          gcloud artifacts docker tags add \
+            "${AR_IMAGE_PATH}:${NEW_TAG}" \
+            "${AR_IMAGE_PATH}:stable" \
+            --quiet
