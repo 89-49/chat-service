@@ -224,3 +224,5 @@ gradle-app.setting
 
 generated/
 src/main/resources/ssl/kafka.server.truststore.jks
+
+.env
